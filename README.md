@@ -83,12 +83,32 @@ Optional: set `FRONTEND_URL` in `backend/.env` during development so CORS allows
 
 Errors use: `{ "error": string, "message": string }`.
 
-## Production deploy (outline)
+## Production deploy
 
-1. **PostgreSQL**: managed instance (Neon, RDS, etc.). Run the same migration SQL.
-2. **Backend**: set `PORT`, `DATABASE_URL`, `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `FRONTEND_URL` (your SPA origin). Build with `npm run build`, run `npm start` behind HTTPS (Railway, Render, Fly.io, VPS + reverse proxy).
-3. **Frontend**: build with production `VITE_API_URL` pointing at your public API URL (`npm run build`). Host `frontend/dist` on Netlify, Vercel, Cloudflare Pages, or serve as static files from the same reverse proxy.
-4. Ensure CORS: `FRONTEND_URL` matches the deployed SPA origin exactly.
+### Railway (backend + Postgres)
+
+1. Create a **PostgreSQL** plugin and a **Node** service from this repo.
+2. **Root directory** (pick one):
+   - **Recommended:** Service → Settings → Root Directory → `backend` (uses `backend/railway.toml`).
+   - **Or** leave root as `/` — the repo root `package.json` runs `build` / `start` in `backend/`.
+3. Link Postgres to the backend service so `DATABASE_URL` is injected.
+4. Set variables on the backend service:
+   - `JWT_SECRET`, `ADMIN_USERNAME`, `ADMIN_PASSWORD` (bcrypt hash)
+   - `FRONTEND_URL` — your Vercel URL, e.g. `https://your-app.vercel.app`
+   - `PORT` is set by Railway automatically
+5. Run `backend/src/db/migrations/001_create_guests.sql` against the Railway database once.
+6. Generate a public domain for the API; use that URL as `VITE_API_URL` on Vercel.
+
+### Vercel (frontend)
+
+1. Import the repo; set **Root Directory** to `frontend`.
+2. Add all `VITE_*` variables from `frontend/.env.example` (party copy, maps, Spotify, images).
+3. Set `VITE_API_URL` to your Railway API URL (no trailing slash).
+4. Deploy — `frontend/vercel.json` rewrites routes for React Router (`/admin`, etc.).
+
+### CORS
+
+`FRONTEND_URL` on Railway must match the deployed SPA origin exactly (scheme + host, no trailing slash).
 
 ## Project layout
 

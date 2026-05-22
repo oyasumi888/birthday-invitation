@@ -1,0 +1,12 @@
+{
+  "name": "birthday-invitation",
+  "private": true,
+  "description": "Monorepo deploy shim — Railway builds backend via scripts below",
+  "scripts": {
+    "build": "npm ci --prefix backend && npm run build --prefix backend",
+    "start": "npm start --prefix backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
