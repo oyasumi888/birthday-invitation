@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { ApiError, loginRequest } from '../services/api'
@@ -10,10 +10,14 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const inFlightRef = useRef(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (inFlightRef.current || loading) return
+
     setError(null)
+    inFlightRef.current = true
     setLoading(true)
     try {
       const { token } = await loginRequest(username, password)
@@ -22,6 +26,7 @@ export function LoginPage() {
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Login failed')
     } finally {
+      inFlightRef.current = false
       setLoading(false)
     }
   }

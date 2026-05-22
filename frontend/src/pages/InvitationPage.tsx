@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ConfirmationModal } from '../components/ConfirmationModal'
 import { PartyDetails } from '../components/PartyDetails'
 import { RSVPForm } from '../components/RSVPForm'
+import { SpotifyEmbed } from '../components/SpotifyEmbed'
 import { partyConfig } from '../config/party'
 import { submitRsvp, ApiError } from '../services/api'
 
@@ -129,6 +130,13 @@ export function InvitationPage() {
         </div>
       </section>
 
+      {partyConfig.spotifyEmbedUrl ? (
+        <>
+          <div className="rule" />
+          <SpotifyEmbed />
+        </>
+      ) : null}
+
       <div className="rule" />
 
       <section className="bg-poster-bg px-4 py-16 sm:px-8">
@@ -137,13 +145,8 @@ export function InvitationPage() {
             setFormError(null)
             try {
               await submitRsvp(payload)
-              const going = payload.status === 'going'
-              setModalTitle(going ? 'CONFIRMED' : 'RECORDED')
-              setModalBody(
-                going
-                  ? 'Your RSVP is on file. See you at the door.'
-                  : 'Thanks — we have your response on record.'
-              )
+              setModalTitle('CONFIRMED')
+              setModalBody('Your RSVP is on file. See you at the door.')
               setModalOpen(true)
             } catch (e) {
               const msg =

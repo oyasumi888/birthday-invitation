@@ -6,23 +6,24 @@ type Props = {
 }
 
 export function StatsCards({ stats, loading }: Props) {
-  const items: { key: keyof Stats; label: string }[] = [
-    { key: 'total', label: 'Total RSVPs' },
-    { key: 'going', label: 'Going' },
-    { key: 'not_going', label: 'Not going' },
-    { key: 'cancelled', label: 'Cancelled' },
+  const cards = [
+    { label: 'Total RSVPs', value: stats?.total },
+    { label: 'Attending', value: stats?.going },
+    { label: 'Cancelled', value: stats?.cancelled },
   ]
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map((c) => (
+    <div className="grid gap-4 sm:grid-cols-3">
+      {cards.map((c) => (
         <div
-          key={c.key}
+          key={c.label}
           className="rounded-[2px] border border-poster-white bg-poster-surface p-4"
         >
-          <p className="font-body text-[11px] uppercase tracking-[0.2em] text-poster-muted">{c.label}</p>
+          <p className="font-body text-[11px] uppercase tracking-[0.2em] text-poster-muted">
+            {c.label}
+          </p>
           <p className="mt-3 font-display text-5xl uppercase tracking-normal text-poster-text">
-            {loading && !stats ? '—' : stats?.[c.key] ?? 0}
+            {loading && stats == null ? '—' : (c.value ?? 0)}
           </p>
         </div>
       ))}

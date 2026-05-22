@@ -1,3 +1,5 @@
+import { spotifyEmbedSrc } from '../utils/spotify'
+
 const env = import.meta.env
 
 function envTrim(key: keyof ImportMetaEnv): string | undefined {
@@ -35,4 +37,17 @@ export const partyConfig = {
   inviteImageMid: envTrim('VITE_INVITE_IMAGE_MID'),
   inviteImageMidAlt: envTrim('VITE_INVITE_IMAGE_MID_ALT') ?? '',
   inviteImageMidCaption: envTrim('VITE_INVITE_IMAGE_MID_CAPTION'),
+
+  /** Spotify playlist/album embed — paste embed src or open.spotify.com playlist URL */
+  spotifyEmbedUrl: (() => {
+    const raw = envTrim('VITE_SPOTIFY_EMBED_URL')
+    if (!raw) return undefined
+    return spotifyEmbedSrc(raw)
+  })(),
+  spotifyTitle: envTrim('VITE_SPOTIFY_TITLE') ?? 'Party playlist',
+  spotifyDescription: envTrim('VITE_SPOTIFY_DESCRIPTION'),
+  /** Invite link from Spotify → Invite collaborators → Copy link */
+  spotifyCollabUrl: envTrim('VITE_SPOTIFY_COLLAB_URL'),
+  spotifyCollabLabel:
+    envTrim('VITE_SPOTIFY_COLLAB_LABEL') ?? 'Add songs — join as collaborator',
 }

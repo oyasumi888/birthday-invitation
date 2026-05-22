@@ -7,18 +7,23 @@ type Props = {
   onDelete: (id: string) => Promise<void>
 }
 
+/** Host-facing labels — public RSVP always submits as attending (going). */
 const statusLabels: Record<GuestStatus, string> = {
-  going: 'Going',
-  not_going: 'Not going',
+  going: 'Attending',
+  not_going: 'Not attending',
   cancelled: 'Cancelled',
 }
+
+type AdminFilter = 'all' | 'going' | 'cancelled'
 
 function StatusBadge({ status }: { status: GuestStatus }) {
   const base =
     'inline-block rounded-none border px-2 py-1 font-body text-[10px] font-bold uppercase tracking-wider'
   if (status === 'going') {
     return (
-      <span className={`${base} border-poster-white text-poster-white`}>{statusLabels.going}</span>
+      <span className={`${base} border-poster-white text-poster-white`}>
+        {statusLabels.going}
+      </span>
     )
   }
   if (status === 'not_going') {
@@ -41,16 +46,18 @@ const fieldClass =
   'mt-2 w-full rounded-[2px] border border-poster-white bg-poster-bg px-3 py-2 font-body text-sm text-poster-white outline-none focus:border-2 focus:border-poster-white'
 
 export function GuestList({ guests, onStatusChange, onDelete }: Props) {
-  const [filter, setFilter] = useState<GuestStatus | 'all'>('all')
+  const [filter, setFilter] = useState<AdminFilter>('all')
   const [search, setSearch] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return guests.filter((g) => {
-      if (filter !== 'all' && g.status !== filter) return false
+      if (filter === 'going' && g.status !== 'going') return false
+      if (filter === 'cancelled' && g.status !== 'cancelled') return false
       if (!q) return true
-      return g.name.toLowerCase().includes(q)
+      const phone = g.phone?.toLowerCase() ?? ''
+      return g.name.toLowerCase().includes(q) || phone.includes(q)
     })
   }, [guests, filter, search])
 
@@ -84,33 +91,34 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
     }
   }
 
+  function formatPhone(g: Guest): string {
+    return g.phone?.trim() || '—'
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 border-b border-poster-white pb-4 sm:flex-row sm:items-end sm:justify-between">
         <label className="block flex-1 font-body text-[11px] uppercase tracking-[0.2em] text-poster-muted">
-          Search by name
+          Search by name or phone
           <input
             className={fieldClass}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Type a name…"
+            placeholder="Type a name or phone…"
           />
         </label>
         <label className="block font-body text-[11px] uppercase tracking-[0.2em] text-poster-muted sm:w-52">
-          Filter status
+          Filter
           <select
             className={fieldClass}
             value={filter}
-            onChange={(e) => setFilter(e.target.value as GuestStatus | 'all')}
+            onChange={(e) => setFilter(e.target.value as AdminFilter)}
           >
             <option value="all" className="bg-poster-bg">
               All
             </option>
             <option value="going" className="bg-poster-bg">
-              Going
-            </option>
-            <option value="not_going" className="bg-poster-bg">
-              Not going
+              Attending
             </option>
             <option value="cancelled" className="bg-poster-bg">
               Cancelled
@@ -124,7 +132,7 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
           <thead>
             <tr className="border-b border-poster-white text-[11px] uppercase tracking-[0.2em] text-poster-muted">
               <th className="py-3 pr-4">Name</th>
-              <th className="py-3 pr-4">Contact</th>
+              <th className="py-3 pr-4">Phone</th>
               <th className="py-3 pr-4">Status</th>
               <th className="py-3 pr-4">+1s</th>
               <th className="py-3 pr-4">Message</th>
@@ -140,7 +148,7 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
               >
                 <td className="py-3 pr-4 font-medium">{g.name}</td>
                 <td className="max-w-[14rem] truncate py-3 pr-4 text-poster-muted">
-                  {[g.email, g.phone].filter(Boolean).join(' · ') || '—'}
+                  {formatPhone(g)}
                 </td>
                 <td className="py-3 pr-4">
                   <StatusBadge status={g.status} />
@@ -156,17 +164,17 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
                   <div className="flex flex-wrap items-center gap-2">
                     <select
                       className="rounded-[2px] border border-poster-white bg-poster-bg px-2 py-1 font-body text-xs uppercase text-poster-white outline-none focus:border-2 focus:border-poster-white"
-                      value={g.status}
+                      value={g.status === 'cancelled' ? 'cancelled' : 'going'}
                       disabled={busyId === g.id}
                       onChange={(e) =>
-                        void handleStatus(g.id, e.target.value as GuestStatus)
+                        void handleStatus(
+                          g.id,
+                          e.target.value === 'cancelled' ? 'cancelled' : 'going'
+                        )
                       }
                     >
                       <option value="going" className="bg-poster-bg">
-                        Going
-                      </option>
-                      <option value="not_going" className="bg-poster-bg">
-                        Not going
+                        Attending
                       </option>
                       <option value="cancelled" className="bg-poster-bg">
                         Cancelled
@@ -200,7 +208,7 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
                   {g.name}
                 </h3>
                 <p className="mt-1 font-body text-xs text-poster-muted">
-                  {[g.email, g.phone].filter(Boolean).join(' · ') || 'No contact'}
+                  {formatPhone(g) === '—' ? 'No phone' : formatPhone(g)}
                 </p>
               </div>
               <StatusBadge status={g.status} />
@@ -227,15 +235,17 @@ export function GuestList({ guests, onStatusChange, onDelete }: Props) {
             <div className="mt-4 flex flex-wrap gap-2">
               <select
                 className="flex-1 rounded-[2px] border border-poster-white bg-poster-bg px-2 py-2 font-body text-xs uppercase text-poster-white outline-none focus:border-2 focus:border-poster-white"
-                value={g.status}
+                value={g.status === 'cancelled' ? 'cancelled' : 'going'}
                 disabled={busyId === g.id}
-                onChange={(e) => void handleStatus(g.id, e.target.value as GuestStatus)}
+                onChange={(e) =>
+                  void handleStatus(
+                    g.id,
+                    e.target.value === 'cancelled' ? 'cancelled' : 'going'
+                  )
+                }
               >
                 <option value="going" className="bg-poster-bg">
-                  Going
-                </option>
-                <option value="not_going" className="bg-poster-bg">
-                  Not going
+                  Attending
                 </option>
                 <option value="cancelled" className="bg-poster-bg">
                   Cancelled

@@ -40,10 +40,8 @@ const uuidSchema = z.string().uuid();
 
 const createRsvpSchema = z.object({
   name: z.string().trim().min(1).max(100),
-  email: z.union([z.literal(''), z.string().trim().email().max(150)]).optional(),
   phone: z.union([z.literal(''), z.string().trim().max(20)]).optional(),
   plus_ones: z.number().int().min(0).max(5).optional(),
-  status: z.enum(['going', 'not_going']),
   message: z.union([z.literal(''), z.string().trim().max(2000)]).optional(),
 });
 
@@ -68,17 +66,41 @@ export async function submitRsvp(req: Request, res: Response): Promise<void> {
     return;
   }
 
-  const { name, email, phone, plus_ones, status, message } = parsed.data;
+  const { name, phone, plus_ones, message } = parsed.data;
+  const status = 'going' as const;
+  const phoneNorm = normalizeOptional(phone);
 
   try {
+    const duplicate = await pool.query<{ id: string }>(
+      `SELECT id FROM guests
+       WHERE lower(trim(name)) = lower(trim($1))
+       AND (
+         ($2::text IS NULL AND phone IS NULL)
+         OR phone IS NOT DISTINCT FROM $2
+       )
+       AND created_at > NOW() - INTERVAL '2 minutes'
+       LIMIT 1`,
+      [name, phoneNorm]
+    );
+
+    if (duplicate.rowCount && duplicate.rowCount > 0) {
+      sendError(
+        res,
+        429,
+        'duplicate_rsvp',
+        'This RSVP was already received. Please wait before submitting again.'
+      );
+      return;
+    }
+
     const result = await pool.query<GuestRow>(
       `INSERT INTO guests (name, email, phone, status, plus_ones, message)
        VALUES ($1, $2, $3, $4::guest_status, $5, $6)
        RETURNING id, name, email, phone, status, plus_ones, message, created_at, updated_at`,
       [
         name,
-        normalizeOptional(email),
-        normalizeOptional(phone),
+        null,
+        phoneNorm,
         status,
         plus_ones ?? 0,
         normalizeOptional(message),

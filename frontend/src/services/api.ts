@@ -84,10 +84,8 @@ export type Guest = {
 
 export type RsvpPayload = {
   name: string
-  email?: string
   phone?: string
   plus_ones?: number
-  status: 'going' | 'not_going'
   message?: string
 }
 

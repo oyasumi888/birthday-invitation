@@ -21,6 +21,13 @@ interface ImportMetaEnv {
   readonly VITE_INVITE_IMAGE_MID?: string
   readonly VITE_INVITE_IMAGE_MID_ALT?: string
   readonly VITE_INVITE_IMAGE_MID_CAPTION?: string
+  /** Spotify embed src or open.spotify.com playlist/album URL */
+  readonly VITE_SPOTIFY_EMBED_URL?: string
+  readonly VITE_SPOTIFY_TITLE?: string
+  readonly VITE_SPOTIFY_DESCRIPTION?: string
+  /** Spotify collaborator invite link (Share → Invite collaborators in Spotify) */
+  readonly VITE_SPOTIFY_COLLAB_URL?: string
+  readonly VITE_SPOTIFY_COLLAB_LABEL?: string
 }
 
 interface ImportMeta {

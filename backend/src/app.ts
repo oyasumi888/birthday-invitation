@@ -5,6 +5,8 @@ import { rsvpRouter } from './routes/rsvp.js';
 
 const app = express();
 
+app.set('trust proxy', 1);
+
 const frontendRaw = process.env.FRONTEND_URL;
 const frontendOrigins = frontendRaw
   ? frontendRaw

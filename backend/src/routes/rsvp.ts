@@ -7,10 +7,11 @@ import {
   updateGuest,
 } from '../controllers/rsvpController.js';
 import { verifyToken } from '../middleware/authMiddleware.js';
+import { rsvpSubmitLimiter } from '../middleware/rateLimit.js';
 
 export const rsvpRouter = Router();
 
-rsvpRouter.post('/', submitRsvp);
+rsvpRouter.post('/', rsvpSubmitLimiter, submitRsvp);
 
 rsvpRouter.get('/stats', verifyToken, getStats);
 rsvpRouter.get('/', verifyToken, listGuests);

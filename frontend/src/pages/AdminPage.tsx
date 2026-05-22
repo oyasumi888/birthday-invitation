@@ -20,7 +20,7 @@ export function AdminPage() {
               Guest ledger
             </h1>
             <p className="mt-2 font-body text-xs text-poster-muted">
-              Auto-refresh every 30 seconds
+              Attending RSVPs only on the invite · Auto-refresh every 30 seconds
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
